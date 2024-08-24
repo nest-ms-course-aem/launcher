@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+
+  nats-server:
+    image: nats:latest
+    ports:
+      - 8222:8222
+
+  client-gateway:
+    build: ./client-gateway # search for he docker file on that specific path 
+    ports:
+      - ${CLIENT_GATEWAY_PORT}:3000
+    volumes:
+      - ./client-gateway/src:/usr/src/app/src # /usr/src/app/src by default in node
+    command: yarn start:dev
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222 # Now we change the localhost to nats-server (service name) this follows the docker network standard
+    
+  products-ms:
+    build: ./products-ms
+    volumes:
+    - ./products-ms/src:/usr/src/app/src # /usr/src/app/src by default in node
+    command: yarn start:dev
+    environment:
+      - PORT=3000 # we expose this port but they communicate via nats
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=file:./dev.db
+
+  orders-ms:
+    depends_on:
+      - orders-db
+    build: ./orders-ms
+    volumes:
+    - ./orders-ms/src:/usr/src/app/src # /usr/src/app/src by default in node
+    command: yarn start:dev
+    environment:
+      - PORT=3002 
+      - DATABASE_URL=postgresql://postgres:123456@orders-db:5432/ordersdb?schema=public
+      - NATS_SERVERS=nats://nats-server:4222
+      
+  orders-db:
+    # container_name: orders_database # completely optional
+    image: postgres:16.2
+    restart: always
+    volumes:
+      - ./oders-ms/postgres:/vars/lib/postgresql/data
+    ports: # allows to encapsulate
+      - 5432:5432  #  not necessary only to expose it to your local
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=ordersdb
