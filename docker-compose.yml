@@ -8,7 +8,7 @@ services:
       - 8222:8222
 
   client-gateway:
-    build: ./client-gateway # search for he docker file on that specific path 
+    build: ./client-gateway # search for he dockerfile on that specific path 
     ports:
       - ${CLIENT_GATEWAY_PORT}:3000
     volumes:
@@ -45,7 +45,7 @@ services:
     image: postgres:16.2
     restart: always
     volumes:
-      - ./oders-ms/postgres:/vars/lib/postgresql/data
+      - ./orders-ms/postgres:/vars/lib/postgresql/data
     ports: # allows to encapsulate
       - 5432:5432  #  not necessary only to expose it to your local
     environment:
