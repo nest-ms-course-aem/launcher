@@ -1,0 +1,81 @@
+version: '3'
+
+services:
+
+  nats-server:
+    image: nats:latest
+
+  client-gateway:
+    build:
+      context: ./client-gateway
+      dockerfile: dockerfile.prod
+    image: launcher-client-gateway-prod
+    ports:
+      - ${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}
+    environment:
+      - PORT=${CLIENT_GATEWAY_PORT}
+      - NATS_SERVERS=nats://nats-server:4222
+      
+  auth-ms:
+    build: 
+      context: ./auth-ms
+      dockerfile: dockerfile.prod
+    image: launcher-auth-ms-prod
+    environment:
+      - PORT=3005
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${AUTH_DATABASE_URL}
+      - SECRET_JWT=${SECRET_JWT}
+    
+  products-ms:
+    build:
+      context: ./products-ms
+      dockerfile: dockerfile.prod
+    image: launcher-products-ms
+    environment:
+      - PORT=3000 # we expose this port but they communicate via nats
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=file:./dev.db
+
+  payments-ms:
+    build: 
+      context: ./payment-ms
+      dockerfile: dockerfile.prod
+    ports:
+      - ${PAYMENTS_PORT}:${PAYMENTS_PORT}
+    image: launcher-payments-ms
+    environment:
+      - PORT=${PAYMENTS_PORT}
+      - NATS_SERVERS=nats://nats-server:4222
+      - SECRET_API_KEY=${PAYMENTS_SECRET_API_KEY}
+      - SUCCESS_URL=${PAYMENTS_SUCCESS_URL}
+      - CANCEL_URL=${PAYMENTS_CANCEL_URL}
+      - ENDPOINT_SECRET=${PAYMENTS_ENDPOINT_SECRET}
+
+  orders-ms:
+    # depends_on: db is on the cloud
+    #   - orders-db
+    build: 
+      context: ./orders-ms
+      dockerfile: dockerfile.prod
+      args:
+        - ORDERS_DB_URL=${ORDER_DB_URL} #For the mogration
+    image: launcher-orders-ms
+    environment:
+      - PORT=3000 
+      - DATABASE_URL=${ORDER_DB_URL} #THIS ONE IS FOR PRISMA
+      - NATS_SERVERS=nats://nats-server:4222
+      
+  # orders-db:
+  #   # container_name: orders_database # completely optional
+  #   image: postgres:16.2
+  #   restart: always
+  #   volumes:
+  #     - ./orders-ms/postgres:/vars/lib/postgresql/data
+  #   ports: # allows to encapsulate
+  #     - 5432:5432  #  not necessary only to expose it to your local
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=123456
+  #     - POSTGRES_DB=ordersdb 
+  
