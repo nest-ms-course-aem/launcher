@@ -9,7 +9,7 @@ services:
     build:
       context: ./client-gateway
       dockerfile: dockerfile.prod
-    image: launcher-client-gateway-prod
+    image: southamerica-east1-docker.pkg.dev/microservices-fh-nestjs/image-repo/client-gateway
     ports:
       - ${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}
     environment:
@@ -20,7 +20,7 @@ services:
     build: 
       context: ./auth-ms
       dockerfile: dockerfile.prod
-    image: launcher-auth-ms-prod
+    image: southamerica-east1-docker.pkg.dev/microservices-fh-nestjs/image-repo/auth-ms
     environment:
       - PORT=3005
       - NATS_SERVERS=nats://nats-server:4222
@@ -31,7 +31,7 @@ services:
     build:
       context: ./products-ms
       dockerfile: dockerfile.prod
-    image: launcher-products-ms
+    image: southamerica-east1-docker.pkg.dev/microservices-fh-nestjs/image-repo/products-ms
     environment:
       - PORT=3000 # we expose this port but they communicate via nats
       - NATS_SERVERS=nats://nats-server:4222
@@ -43,7 +43,7 @@ services:
       dockerfile: dockerfile.prod
     ports:
       - ${PAYMENTS_PORT}:${PAYMENTS_PORT}
-    image: launcher-payments-ms
+    image: southamerica-east1-docker.pkg.dev/microservices-fh-nestjs/image-repo/payments-ms
     environment:
       - PORT=${PAYMENTS_PORT}
       - NATS_SERVERS=nats://nats-server:4222
@@ -60,7 +60,7 @@ services:
       dockerfile: dockerfile.prod
       args:
         - ORDERS_DB_URL=${ORDER_DB_URL} #For the mogration
-    image: launcher-orders-ms
+    image: southamerica-east1-docker.pkg.dev/microservices-fh-nestjs/image-repo/orders-ms
     environment:
       - PORT=3000 
       - DATABASE_URL=${ORDER_DB_URL} #THIS ONE IS FOR PRISMA
